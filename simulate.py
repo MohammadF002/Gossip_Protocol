@@ -53,7 +53,7 @@ def run_experiment(N, seed, base_port):
     env = os.environ.copy()
     env["LOG_DIR"] = run_folder
 
-    # bootstrap (بدون auto_gossip)
+    # bootstrap
     bootstrap = subprocess.Popen(
         ["py", NODE_SCRIPT,
          "--port", str(base_port),

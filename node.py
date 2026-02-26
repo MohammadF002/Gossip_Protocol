@@ -238,6 +238,7 @@ class Node:
                 del self.peers[oldest.peer_id]
 
             self.peers[peer_id] = Peer(peer_id, addr)
+            print(f"[INFO] Added peer: node_id={peer_id}, addr={addr}")
 
     def bootstrap(self, bootstrap_addr):
 
@@ -281,6 +282,9 @@ class Node:
     def handle_gossip(self, msg):
 
         msg_id = msg["msg_id"]
+        sender_id = msg["sender_id"]
+        sender_addr = msg["sender_addr"]
+        message_content = msg["payload"]["data"]
 
         if msg_id in self.seen:
             return
@@ -289,6 +293,11 @@ class Node:
 
         recv_time = time.time()
         self.log(f"RECV {msg_id} {recv_time}")
+        print (f"[INFO] Received a new gossip: "
+               f"\n\tcontent={message_content}"
+               f"\n\tmessage_id={msg_id}"
+               f"\n\tsender_id={sender_id}"
+               f"\n\tsender_addr={sender_addr}")
 
         ttl = msg["ttl"] - 1
         if ttl <= 0:
@@ -313,6 +322,9 @@ class Node:
 
         for p in selected:
             self.send(msg, p.addr)
+            print(f"[INFO] Forwarding message to a peer: "
+                  f"\n\tcontent={msg['payload']['data']}"
+                  f"\n\tdestination={p.addr}")
 
     # ==============================
     # PERIODIC LOOPS
@@ -330,6 +342,9 @@ class Node:
                     peer = self.peers[pid]
 
                     if now - peer.last_seen > self.config.peer_timeout:
+                        print(f"[WARN] Peer removed due to timeout"
+                              f"\n\tid={peer.peer_id}"
+                              f"\n\taddr={peer.addr}")
                         del self.peers[pid]
                     else:
                         ping = self.create_message("PING", {})
