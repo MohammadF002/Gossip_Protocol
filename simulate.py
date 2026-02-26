@@ -3,13 +3,12 @@ import time
 import os
 import shutil
 import sys
-import csv
 import atexit
 
-N_VALUES = [10]
-NUM_RUNS = 1
+N_VALUES = [10, 20, 50]
+NUM_RUNS = 5
 
-BASE_PORT = 15638
+BASE_PORT = 9000
 FORMATION_TIME = 8
 GOSSIP_TIME = 10
 NODE_SCRIPT = "node.py"
@@ -59,6 +58,7 @@ def run_experiment(N, seed, base_port):
          "--port", str(base_port),
          "--seed", str(seed)],
         stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
         env=env,
         text=True
     )
@@ -76,12 +76,13 @@ def run_experiment(N, seed, base_port):
              "--bootstrap", f"127.0.0.1:{base_port}",
              "--seed", str(seed + i)],
             stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
             env=env,
             text=True
         )
         processes.append(p)
         all_processes.append(p)
-        time.sleep(0.7)
+        time.sleep(0.3)
 
     print("⏳ Waiting for network formation...")
     time.sleep(FORMATION_TIME)
@@ -96,27 +97,10 @@ def run_experiment(N, seed, base_port):
     safe_terminate(processes)
     time.sleep(2)
 
-    result = subprocess.check_output(
-        ["py", "analyze.py", run_folder, str(N)]
-    ).decode().strip().split(",")
-
-    conv = float(result[0])
-    over = int(result[1])
-
-    return conv, over
-
 
 if __name__ == "__main__":
-    with open("results.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["N", "seed", "convergence", "overhead"])
-
     for N in N_VALUES:
         for run in range(NUM_RUNS):
             seed = 100 + run
             base_port = 9000 + run * 200
-            conv, over = run_experiment(N, seed, base_port)
-
-            with open("results.csv", "a", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow([N, seed, conv, over])
+            run_experiment(N, seed, base_port)
