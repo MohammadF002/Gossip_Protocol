@@ -8,3 +8,5 @@
 {"mode": "push", "msg_id": "50e8fb23-4af6-4416-8b94-3f8b8fc09e6b", "delivery_ratio": 0.8, "propagation_delay_sec": 0.0083, "total_messages_sent_for_msg": 11, "nodes_reached": 8, "total_nodes": 10}
 {"mode": "push", "msg_id": "8204734f-329f-4a66-b6ed-d9b1b1f526a0", "delivery_ratio": 0.6, "propagation_delay_sec": 0.0024, "total_messages_sent_for_msg": 8, "nodes_reached": 6, "total_nodes": 10}
 {"mode": "push", "msg_id": "72d8c195-f342-4b23-b42d-187a12556947", "delivery_ratio": 0.6, "propagation_delay_sec": 0.0232, "total_messages_sent_for_msg": 8, "nodes_reached": 6, "total_nodes": 10}
+{"mode": "push", "msg_id": "c343801b-ad6d-4c9b-8e45-e170f9c4d824", "delivery_ratio": 0.9, "propagation_delay_sec": 0.0083, "total_messages_sent_for_msg": 30, "nodes_reached": 9, "total_nodes": 10}
+{"mode": "push", "msg_id": "8b4ca14a-dbdd-4394-bcb1-f3117783d7d0", "delivery_ratio": 0.6, "propagation_delay_sec": 0.0105, "total_messages_sent_for_msg": 15, "nodes_reached": 6, "total_nodes": 10}

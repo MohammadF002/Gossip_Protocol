@@ -186,8 +186,7 @@ class Node:
                 sender_addr = msg.get("sender_addr")
                 msg_type = msg.get("msg_type")
 
-                if sender_id and sender_id != self.node_id and msg_type != "HELLO":
-                    self.update_peer(sender_id, sender_addr)
+
 
                 self.dispatch(msg)
 
@@ -197,8 +196,13 @@ class Node:
     def dispatch(self, msg):
 
         msg_type = msg.get("msg_type")
+        sender_id = msg.get("sender_id")
 
         if msg_type == "HELLO":
+            with self.peer_lock:
+                if sender_id not in self.peers:
+                    self.log(f"DROP_UNKNOWN_PEER sender={sender_id} type={msg_type}")
+                    return
             self.handle_hello(msg)
 
         elif msg_type == "GET_PEERS":
@@ -503,7 +507,7 @@ if __name__ == "__main__":
                         help="Interval (seconds) for Hybrid IHAVE/IWANT; 0 disables hybrid pull.")
     parser.add_argument("--ihave-max-ids", type=int, default=32,
                         help="Maximum number of msg_ids included in each IHAVE.")
-    parser.add_argument("--pow-k", type=int, default=4,
+    parser.add_argument("--pow-k", type=int, default=3,
                         help="Proof-of-Work difficulty (leading zero hex digits) for HELLO.")
     parser.add_argument("--seed", type=int, default=42)
 
