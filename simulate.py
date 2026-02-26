@@ -76,20 +76,17 @@ def run_experiment(N, seed, base_port):
              "--port", str(port),
              "--bootstrap", f"127.0.0.1:{base_port}",
              "--seed", str(seed + i)],
-            env=env
+            stdin=subprocess.PIPE,
+            env=env,
+            text=True
         )
-        if p.poll() is not None:
-            print("Process crashed immediately!")
-            print("STDERR:", p.stderr.read())
         processes.append(p)
         all_processes.append(p)
-        # time.sleep(0.3)
-        time.sleep(10)
+        time.sleep(0.3)
 
     print("Total processes:", len(processes))
     print("⏳ Waiting for network formation...")
-    # time.sleep(FORMATION_TIME)
-    time.sleep(10)
+    time.sleep(FORMATION_TIME)
 
 
     print("🚀 Triggering gossip...")
