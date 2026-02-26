@@ -69,7 +69,6 @@ def run_experiment(N, seed, base_port):
     time.sleep(2)
 
     for i in range(1, N):
-        print(f"Making the client no.{i}")
         port = base_port + i
         p = subprocess.Popen(
             [sys.executable, NODE_SCRIPT,
@@ -84,7 +83,6 @@ def run_experiment(N, seed, base_port):
         all_processes.append(p)
         time.sleep(0.3)
 
-    print("Total processes:", len(processes))
     print("⏳ Waiting for network formation...")
     time.sleep(FORMATION_TIME)
 
@@ -109,7 +107,6 @@ def run_experiment(N, seed, base_port):
 
 
 if __name__ == "__main__":
-    print("CWD:", os.getcwd())
     with open("results.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["N", "seed", "convergence", "overhead"])

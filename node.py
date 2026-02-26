@@ -62,13 +62,11 @@ class Node:
         log_dir = os.environ.get("LOG_DIR", "logs")
         os.makedirs(log_dir, exist_ok=True)
 
-        print(f"initializing client {self.node_id} _ before log creation")
         self.log_file = open(
             f"{log_dir}/log_{self.node_id}.txt",
             "w",
             buffering=1
         )
-        print(f"initializing client {self.node_id} _ before socket")
         # ---------- Socket ----------
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("127.0.0.1", args.port))
@@ -204,7 +202,6 @@ class Node:
         msg_type = msg.get("msg_type")
 
         if msg_type == "HELLO":
-            print("Received Hello!")
             pass
 
         elif msg_type == "GET_PEERS":
@@ -220,7 +217,6 @@ class Node:
             pass
 
         elif msg_type == "GOSSIP":
-            print("Received Gossip!")
             self.handle_gossip(msg)
 
     # ==============================
@@ -306,12 +302,10 @@ class Node:
         self.forward(new_msg)
 
     def forward(self, msg):
-        print("forwarding")
         with self.peer_lock:
             peers = list(self.peers.values())
 
         if not peers:
-            print("no peers found")
             return
 
         k = min(len(peers), self.config.fanout)
@@ -319,7 +313,6 @@ class Node:
 
         for p in selected:
             self.send(msg, p.addr)
-        print("sent message!!")
 
     # ==============================
     # PERIODIC LOOPS
@@ -346,18 +339,12 @@ class Node:
 
         while True:
             line = sys.stdin.readline().strip()
-            print("sending message!")
             if not line:
-                print("no input received!")
                 continue
-            print("creating message!")
             msg = self.create_message("GOSSIP", {"data": line})
-            print("message created")
             self.seen.add(msg["msg_id"])
-            print("updated seen set")
             origin_time = time.time()
             self.log(f"ORIGIN {msg['msg_id']} {origin_time}")
-            print("before forward")
             self.forward(msg)
 
 
