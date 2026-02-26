@@ -1,0 +1,10 @@
+{"mode": "hybrid", "delivery_ratio": 0.1, "propagation_delay_sec": 0.0, "total_messages_sent": 86, "nodes_reached": 1, "total_nodes": 10}
+{"mode": "hybrid", "delivery_ratio": 0.1, "propagation_delay_sec": 0.0, "total_messages_sent": 160, "nodes_reached": 1, "total_nodes": 10}
+{"mode": "hybrid", "msg_id": "cbc2b9d7-4475-4aef-b196-a73e2337574f", "delivery_ratio": 0.7, "propagation_delay_sec": 0.2079, "total_messages_sent_for_msg": 18, "nodes_reached": 7, "total_nodes": 10}
+{"mode": "hybrid", "msg_id": "1f171fae-05dd-4ae3-893a-0cdf22ed13c4", "delivery_ratio": 0.9, "propagation_delay_sec": 0.0282, "total_messages_sent_for_msg": 22, "nodes_reached": 9, "total_nodes": 10}
+{"mode": "push", "msg_id": "1266fd3e-ec9a-433b-9df0-32d793df8efd", "delivery_ratio": 0.6, "propagation_delay_sec": 0.01, "total_messages_sent_for_msg": 14, "nodes_reached": 6, "total_nodes": 10}
+{"mode": "push", "msg_id": "1135664c-caca-47c5-affb-3f09301dc0b0", "delivery_ratio": 0.9, "propagation_delay_sec": 0.0, "total_messages_sent_for_msg": 30, "nodes_reached": 9, "total_nodes": 10}
+{"mode": "push", "msg_id": "61f3ae89-5ae5-41eb-86a4-42cf6a805fd9", "delivery_ratio": 0.9, "propagation_delay_sec": 0.0044, "total_messages_sent_for_msg": 30, "nodes_reached": 9, "total_nodes": 10}
+{"mode": "push", "msg_id": "50e8fb23-4af6-4416-8b94-3f8b8fc09e6b", "delivery_ratio": 0.8, "propagation_delay_sec": 0.0083, "total_messages_sent_for_msg": 11, "nodes_reached": 8, "total_nodes": 10}
+{"mode": "push", "msg_id": "8204734f-329f-4a66-b6ed-d9b1b1f526a0", "delivery_ratio": 0.6, "propagation_delay_sec": 0.0024, "total_messages_sent_for_msg": 8, "nodes_reached": 6, "total_nodes": 10}
+{"mode": "push", "msg_id": "72d8c195-f342-4b23-b42d-187a12556947", "delivery_ratio": 0.6, "propagation_delay_sec": 0.0232, "total_messages_sent_for_msg": 8, "nodes_reached": 6, "total_nodes": 10}

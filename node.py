@@ -10,8 +10,7 @@ import os
 import traceback
 import hashlib
 from typing import Dict
-
-
+from stats import StatsCollector
 
 class Config:
     def __init__(self, args):
@@ -37,7 +36,6 @@ class Peer:
 class Node:
 
     def __init__(self, args):
-
         self.node_id = str(uuid.uuid4())
         self.addr = f"127.0.0.1:{args.port}"
         self.config = Config(args)
@@ -62,6 +60,11 @@ class Node:
 
         print(f"[START] {self.node_id} @ {self.addr}")
 
+        self.stats = StatsCollector(
+            self.node_id,
+            "hybrid" if self.config.pull_interval != 0 else "push"
+        )
+
         self.pow_info = self._compute_pow(self.config.pow_k) if self.config.pow_k > 0 else None
 
         threading.Thread(target=self.listen_loop, daemon=True).start()
@@ -75,14 +78,13 @@ class Node:
             self.bootstrap(args.bootstrap)
 
 
+
     def log(self, line: str):
         with self.log_lock:
             self.log_file.write(line + "\n")
 
     def _compute_pow(self, k: int):
-        """
-        Find a nonce such that sha256(node_id || nonce) has k leading zeros in hex.
-        """
+
         target_prefix = "0" * k
         nonce = 0
         node_bytes = self.node_id.encode("utf-8")
@@ -139,6 +141,7 @@ class Node:
 
         try:
             self.sock.sendto(data, (ip, port))
+            self.stats.record_send()
             self.log(f"SENT {msg.get('msg_id')} {time.time()}")
 
         except OSError as e:
@@ -183,15 +186,12 @@ class Node:
                 sender_addr = msg.get("sender_addr")
                 msg_type = msg.get("msg_type")
 
-                # For HELLO messages, we only add the peer after validating PoW
-                # inside handle_hello. For all other messages, update liveness here.
                 if sender_id and sender_id != self.node_id and msg_type != "HELLO":
                     self.update_peer(sender_id, sender_addr)
 
                 self.dispatch(msg)
 
             except Exception as e:
-                # This means YOUR CODE has a bug
                 self.log(f"ERROR DISPATCH {traceback.format_exc()}")
 
     def dispatch(self, msg):
@@ -233,7 +233,6 @@ class Node:
                 return
 
             if len(self.peers) >= self.config.peer_limit and self.peers:
-                # Remove the peer with worst health (most missed pings, then oldest)
                 worst = max(
                     self.peers.values(),
                     key=lambda p: (p.missed_pings, -p.last_seen)
@@ -260,15 +259,12 @@ class Node:
         self.send(get_peers, bootstrap_addr)
 
     def handle_hello(self, msg):
-        """
-        Validate PoW of joining node and add it as peer only if valid.
-        """
+
         sender_id = msg.get("sender_id")
         sender_addr = msg.get("sender_addr")
         payload = msg.get("payload", {})
         pow_info = payload.get("pow")
 
-        # If PoW not configured, accept all.
         if self.config.pow_k <= 0:
             if sender_id and sender_id != self.node_id:
                 self.update_peer(sender_id, sender_addr)
@@ -329,7 +325,6 @@ class Node:
             is_new = p["id"] not in self.peers
             self.update_peer(p["id"], p["addr"])
 
-            # For new peers, send HELLO so connections become more symmetric.
             if is_new:
                 hello_payload = {
                     "capabilities": ["udp", "json"],
@@ -356,7 +351,6 @@ class Node:
             return
 
         self.seen.add(msg_id)
-        # Store full message so we can re-send it later in Hybrid Pull (IWANT).
         self.msg_store[msg_id] = msg
 
         recv_time = time.time()
@@ -365,8 +359,8 @@ class Node:
                f"\n\tcontent={message_content}"
                f"\n\tmessage_id={msg_id}"
                f"\n\tsender_id={sender_id}"
-               f"\n\tsender_addr={sender_addr}")
-
+               f"\n\tsender_addr={sender_addr}"
+               f"at {time.time()}")
         ttl = msg["ttl"] - 1
         if ttl <= 0:
             return
@@ -375,7 +369,7 @@ class Node:
         new_msg["ttl"] = ttl
         new_msg["sender_id"] = self.node_id
         new_msg["sender_addr"] = self.addr
-
+        self.stats.record_receive(msg["msg_id"])
         self.forward(new_msg, exclude_id=sender_id)
 
     def forward(self, msg, exclude_id=None):
@@ -421,15 +415,10 @@ class Node:
                         self.send(ping, peer.addr)
 
     def pull_loop(self):
-        """
-        Hybrid Push-Pull:
-        Periodically send IHAVE messages advertising a subset of known msg_ids.
-        Neighbors missing those ids will reply with IWANT to pull only what they need.
-        """
+
         while True:
             time.sleep(self.config.pull_interval)
 
-            # If we have no messages yet, nothing to advertise.
             if not self.seen:
                 continue
 
@@ -452,17 +441,13 @@ class Node:
             }
             ihave_msg = self.create_message("IHAVE", ihave_payload)
 
-            # Send IHAVE to a subset of peers (similar to fanout).
             k = min(len(peers), self.config.fanout)
             selected = random.sample(peers, k)
             for p in selected:
                 self.send(ihave_msg, p.addr)
 
     def handle_ihave(self, msg):
-        """
-        Receive a list of msg_ids that neighbor has.
-        Request only those we are missing via IWANT.
-        """
+
         payload = msg.get("payload", {})
         ids = payload.get("ids", [])
         sender_addr = msg.get("sender_addr")
@@ -476,10 +461,7 @@ class Node:
         self.send(iwant_msg, sender_addr)
 
     def handle_iwant(self, msg):
-        """
-        Neighbor is asking for specific msg_ids.
-        Re-send full GOSSIP messages for those ids if we have them.
-        """
+
         payload = msg.get("payload", {})
         ids = payload.get("ids", [])
         sender_addr = msg.get("sender_addr")
@@ -488,7 +470,6 @@ class Node:
             original = self.msg_store.get(mid)
             if not original:
                 continue
-            # Re-send as GOSSIP; original already has msg_type="GOSSIP".
             self.send(original, sender_addr)
 
     def user_input_loop(self):
@@ -497,9 +478,13 @@ class Node:
             line = sys.stdin.readline().strip()
             if not line:
                 continue
+            if line == "/report":
+                self.stats.save_report(total_nodes_override=10)
+                continue
             msg = self.create_message("GOSSIP", {"data": line})
             self.seen.add(msg["msg_id"])
             self.msg_store[msg["msg_id"]] = msg
+            self.stats.record_receive(msg["msg_id"])
             origin_time = time.time()
             self.log(f"ORIGIN {msg['msg_id']} {origin_time}")
             self.forward(msg)
@@ -510,10 +495,10 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--bootstrap", type=str)
     parser.add_argument("--fanout", type=int, default=3)
-    parser.add_argument("--ttl", type=int, default=8)
+    parser.add_argument("--ttl", type=int, default=6)
     parser.add_argument("--peer-limit", type=int, default=20)
-    parser.add_argument("--ping-interval", type=int, default=2)
-    parser.add_argument("--peer-timeout", type=int, default=6)
+    parser.add_argument("--ping-interval", type=int, default=5)
+    parser.add_argument("--peer-timeout", type=int, default=30)
     parser.add_argument("--pull-interval", type=int, default=0,
                         help="Interval (seconds) for Hybrid IHAVE/IWANT; 0 disables hybrid pull.")
     parser.add_argument("--ihave-max-ids", type=int, default=32,
