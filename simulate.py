@@ -81,7 +81,7 @@ def run_experiment(N, seed, base_port):
         )
         processes.append(p)
         all_processes.append(p)
-        time.sleep(0.3)
+        time.sleep(0.7)
 
     print("⏳ Waiting for network formation...")
     time.sleep(FORMATION_TIME)
